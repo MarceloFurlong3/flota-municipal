@@ -1,13 +1,17 @@
 """
-Genera index.html con agrupamiento MARCA → MODELO normalizado.
+Genera index.html — Flota Municipal Bahía Blanca
+Admin mode, estados por modelo, filtro de bajas, export CSV.
 """
 import json
 
+PIN_ADMIN = 'admin'   # Cambiar si se quiere otra clave
+
 def generar_html(vehiculos, SERIES, series_activas):
-    data_js = json.dumps(vehiculos, ensure_ascii=False)
-    total = len(vehiculos)
-    SCFG_JS = json.dumps({k: v for k, v in SERIES.items() if k in series_activas}, ensure_ascii=False)
-    SACT_JS = json.dumps(series_activas, ensure_ascii=False)
+    data_js  = json.dumps(vehiculos, ensure_ascii=False)
+    total    = len(vehiculos)
+    SCFG_JS  = json.dumps({k: v for k, v in SERIES.items() if k in series_activas}, ensure_ascii=False)
+    SACT_JS  = json.dumps(series_activas, ensure_ascii=False)
+    PIN_JS   = json.dumps(PIN_ADMIN)
 
     return f'''<!DOCTYPE html>
 <html lang="es">
@@ -26,10 +30,11 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
 
 /* HEADER */
 .hdr{{background:var(--dark);padding:14px 16px 12px;position:sticky;top:0;z-index:200}}
-.hdr-row{{display:flex;align-items:center;margin-bottom:10px}}
+.hdr-row{{display:flex;align-items:center;gap:8px;margin-bottom:10px}}
 .hdr-titulo{{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:1px;line-height:1;flex:1}}
 .hdr-sub{{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-top:2px}}
 .hdr-badge{{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:5px 12px;color:rgba(255,255,255,.8);font-size:12px;font-weight:700;white-space:nowrap}}
+.admin-btn{{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;padding:6px 10px;font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;-webkit-appearance:none;transition:all .2s;flex-shrink:0}}
 .sbox{{position:relative}}
 .sico{{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;opacity:.5;color:#fff}}
 .sinp{{width:100%;padding:11px 14px 11px 38px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.14);border-radius:12px;color:#fff;font-family:'Barlow',sans-serif;font-size:15px;outline:none;-webkit-appearance:none}}
@@ -64,39 +69,20 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
 .sec-tit{{font-size:15px;font-weight:800}}
 .sec-sub{{font-size:11px;color:var(--muted);margin-top:2px}}
 
-/* MARCA SECTION — nivel 1 */
+/* MARCA SECTION */
 .marca-wrap{{margin-bottom:10px}}
-.marca-hdr{{
-  display:flex;align-items:center;gap:10px;padding:11px 14px;
-  border-radius:12px;cursor:pointer;user-select:none;
-  background:var(--dark);color:#fff;
-  transition:opacity .12s;
-}}
+.marca-hdr{{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;cursor:pointer;user-select:none;background:var(--dark);color:#fff;transition:opacity .12s}}
 .marca-hdr:active{{opacity:.85}}
-.marca-logo{{
-  width:34px;height:34px;border-radius:8px;
-  background:rgba(255,255,255,.15);
-  display:flex;align-items:center;justify-content:center;
-  font-size:12px;font-weight:800;color:#fff;flex-shrink:0;
-}}
+.marca-logo{{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}}
 .marca-nombre{{flex:1;font-size:13px;font-weight:800;letter-spacing:.3px}}
-.marca-n{{
-  font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;
-  background:rgba(255,255,255,.15);border-radius:8px;padding:3px 10px;min-width:36px;text-align:center;
-}}
+.marca-n{{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;background:rgba(255,255,255,.15);border-radius:8px;padding:3px 10px;min-width:36px;text-align:center}}
 .marca-arrow{{font-size:14px;opacity:.6;transition:transform .2s}}
 .marca-wrap.closed .marca-arrow{{transform:rotate(-90deg)}}
 .marca-wrap.closed .marca-body{{display:none}}
 .marca-body{{padding:6px 0 0 8px}}
 
-/* MODELO ROW — nivel 2 */
-.mod-row{{
-  display:flex;align-items:center;gap:10px;padding:10px 12px;
-  background:#fff;border-radius:10px;margin-bottom:5px;
-  border:1px solid var(--border);cursor:pointer;
-  box-shadow:0 1px 3px rgba(15,23,42,.04);
-  transition:box-shadow .12s;
-}}
+/* MODELO ROW */
+.mod-row{{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 3px rgba(15,23,42,.04);transition:box-shadow .12s}}
 .mod-row:active{{background:#f8fafc}}
 .mod-row.open{{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent}}
 .mod-color{{width:5px;height:32px;border-radius:3px;flex-shrink:0}}
@@ -104,34 +90,28 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
 .mod-nombre{{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 .mod-tipo{{font-size:10px;color:var(--muted);margin-top:1px}}
 .mod-right{{display:flex;align-items:center;gap:7px;flex-shrink:0}}
-.mod-n{{
-  font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;
-  background:var(--bg);border-radius:7px;padding:3px 9px;min-width:30px;text-align:center;
-}}
+.mod-n{{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;background:var(--bg);border-radius:7px;padding:3px 9px;min-width:30px;text-align:center}}
 .mod-est{{font-size:16px}}
 .mod-arrow{{color:var(--muted);font-size:13px;transition:transform .2s}}
 .mod-row.open .mod-arrow{{transform:rotate(90deg)}}
 
+/* BAJA (admin view) */
+.mod-row.mod-baja{{border-left:3px solid #dc2626;opacity:.7}}
+.mod-row.mod-baja .mod-nombre{{text-decoration:line-through;color:var(--muted)}}
+.baja-n{{color:#dc2626!important}}
+
 /* ESTADO BOTONES */
-.est-row{{
-  display:flex;gap:5px;padding:7px 10px 9px;
-  background:#fff;border:1px solid var(--border);border-top:none;
-  border-bottom-left-radius:10px;border-bottom-right-radius:10px;
-  margin-bottom:5px;
-}}
+.est-row{{display:flex;gap:5px;padding:7px 10px 9px;background:#fff;border:1px solid var(--border);border-top:none;border-bottom-left-radius:10px;border-bottom-right-radius:10px;margin-bottom:5px}}
 .ebtn{{flex:1;padding:8px 4px;border:1.5px solid var(--border);border-radius:9px;background:#f8fafc;color:var(--muted);font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .12s;-webkit-appearance:none}}
 .ebtn:active{{transform:scale(.95)}}
 .e-ok.on{{background:#16a34a;color:#fff;border-color:#16a34a}}
 .e-rev.on{{background:#d97706;color:#fff;border-color:#d97706}}
 .e-baja.on{{background:#dc2626;color:#fff;border-color:#dc2626}}
+.e-del{{background:#fef2f2;color:#dc2626;border-color:#fca5a5;flex:0 0 auto;padding:8px 10px}}
+.e-del:hover{{background:#dc2626;color:#fff;border-color:#dc2626}}
 
 /* VEHÍCULOS LISTA */
-.vlista{{
-  display:none;background:#fff;
-  border:1px solid var(--border);border-top:1px solid #f0f4f9;
-  border-bottom-left-radius:10px;border-bottom-right-radius:10px;
-  margin-bottom:5px;margin-top:-5px;overflow:hidden;
-}}
+.vlista{{display:none;background:#fff;border:1px solid var(--border);border-top:1px solid #f0f4f9;border-bottom-left-radius:10px;border-bottom-right-radius:10px;margin-bottom:5px;margin-top:-5px;overflow:hidden}}
 .mod-row.open + .est-row + .vlista{{display:block}}
 .mod-row.open + .vlista{{display:block}}
 .vrow{{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f8fafc}}
@@ -174,6 +154,7 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
       <div class="hdr-sub">Bahía Blanca — Parque Automotor</div>
     </div>
     <div class="hdr-badge">{total} vehículos</div>
+    <button id="admin-btn" class="admin-btn" onclick="toggleAdmin()">\U0001f512</button>
   </div>
   <div class="sbox">
     <span class="sico">\U0001f50d</span>
@@ -192,19 +173,103 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
   <div class="dvd"></div>
   <div class="sblk"><div class="sn baja" id="s-baja">0</div><div class="slbl">❌ De baja</div></div>
   <div class="dvd"></div>
-  <button class="xbtn" onclick="exportar()">\U0001f4cb Exportar</button>
+  <button class="xbtn" onclick="exportar()">\U0001f4cb CSV</button>
 </div>
 
 <script>
 const VEH={data_js};
 const SCFG={SCFG_JS};
 const SACT={SACT_JS};
-const SK='flota_bhi_v3';
-let EST=JSON.parse(localStorage.getItem(SK)||'{{}}');
+const PIN={PIN_JS};
+const SK='flota_bhi_v4';
+const SK_DEL='flota_bhi_del';
+
+// ── Carga y migración de estados ─────────────────────────────
+let EST={{}};
+try {{
+  const raw=localStorage.getItem(SK)||localStorage.getItem('flota_bhi_v3')||'{{}}';
+  const old=JSON.parse(raw);
+  Object.entries(old).forEach(([k,v])=>{{
+    if(typeof v==='string') EST[k]=v?{{e:v,fb:v==='baja'?0:null}}:{{e:'',fb:null}};
+    else EST[k]=v;
+  }});
+}} catch(err){{EST={{}};}}
+
+let DELETED=new Set();
+try{{DELETED=new Set(JSON.parse(localStorage.getItem(SK_DEL)||'[]'));}}catch(err){{}}
+
+let isAdmin=sessionStorage.getItem('fleet_admin')==='1';
 let serie='TODAS', q='';
+
+// ── Admin ────────────────────────────────────────────────────
+function toggleAdmin(){{
+  if(isAdmin){{
+    if(!confirm('¿Salir del modo administrador?'))return;
+    isAdmin=false;
+    sessionStorage.removeItem('fleet_admin');
+  }}else{{
+    const pin=prompt('\U0001f512 PIN de administrador:');
+    if(pin===null)return;
+    if(pin!==PIN){{alert('PIN incorrecto');return;}}
+    isAdmin=true;
+    sessionStorage.setItem('fleet_admin','1');
+  }}
+  updAdminUI();
+  render();
+}}
+
+function updAdminUI(){{
+  const btn=document.getElementById('admin-btn');
+  if(!btn)return;
+  if(isAdmin){{
+    btn.textContent='\U0001f513 ADMIN';
+    btn.style.background='rgba(22,163,74,.8)';
+    btn.style.borderColor='#16a34a';
+  }}else{{
+    btn.textContent='\U0001f512';
+    btn.style.background='rgba(255,255,255,.1)';
+    btn.style.borderColor='rgba(255,255,255,.2)';
+  }}
+}}
+
+// ── Estado helpers ───────────────────────────────────────────
+function getEst(k){{
+  const v=EST[k];
+  if(!v)return {{e:'',fb:null}};
+  if(typeof v==='string')return {{e:v,fb:null}};
+  return {{e:v.e||'',fb:v.fb||null}};
+}}
+
+function isBaja(k){{return getEst(k).e==='baja';}}
+
+function diasBaja(k){{
+  const fb=getEst(k).fb;
+  if(!fb)return null;
+  return Math.floor((Date.now()-fb)/(24*60*60*1000));
+}}
+
+function puedesBorrar(k){{
+  const est=getEst(k);
+  if(est.e!=='baja')return false;
+  if(!est.fb)return true;
+  return (Date.now()-est.fb)>=30*24*60*60*1000;
+}}
+
+// ── Filtrado ─────────────────────────────────────────────────
+function kmod(v){{return v.serie+'|'+(v.marca||'SIN MARCA')+'|'+(v.modelo_norm||'Sin modelo');}}
+
+function visibles(lista){{
+  return lista.filter(v=>{{
+    const k=kmod(v);
+    if(DELETED.has(k))return false;
+    if(!isAdmin&&isBaja(k))return false;
+    return true;
+  }});
+}}
 
 // ── Pills ────────────────────────────────────────────────────
 const pillsEl=document.getElementById('pills');
+
 function mkPill(s,lbl,n,col){{
   const b=document.createElement('button');
   b.className='pill'+(s==='TODAS'?' sel':'');
@@ -214,45 +279,50 @@ function mkPill(s,lbl,n,col){{
   b.onclick=()=>selS(s,col);
   pillsEl.appendChild(b);
 }}
-mkPill('TODAS','\U0001f697 Todas',VEH.length,'#0f172a');
-SACT.forEach(s=>{{
-  const c=SCFG[s];if(!c)return;
-  mkPill(s,c.emoji+' '+c.label,VEH.filter(v=>v.serie===s).length,c.color);
-}});
+
+function updPills(){{
+  const vis=visibles(VEH);
+  pillsEl.innerHTML='';
+  mkPill('TODAS','\U0001f697 Todas',vis.length,'#0f172a');
+  SACT.forEach(s=>{{
+    const c=SCFG[s];if(!c)return;
+    mkPill(s,c.emoji+' '+c.label,vis.filter(v=>v.serie===s).length,c.color);
+  }});
+  const p=document.getElementById('pill-'+serie);
+  if(p){{p.classList.add('sel');p.style.background=serie==='TODAS'?'#0f172a':(SCFG[serie]?.color||'#0f172a');}}
+}}
 
 function selS(s,col){{
   serie=s;q='';document.getElementById('buscar').value='';
-  document.querySelectorAll('.pill').forEach(p=>{{p.classList.remove('sel');p.style.background=''}});
-  const p=document.getElementById('pill-'+s);
-  if(p){{p.classList.add('sel');p.style.background=col||'#0f172a'}}
   render();
 }}
 
 document.getElementById('buscar').addEventListener('input',e=>{{
   q=e.target.value.toLowerCase().trim();
-  if(q){{serie='TODAS';document.querySelectorAll('.pill').forEach(p=>{{p.classList.remove('sel');p.style.background=''}})}}
+  if(q)serie='TODAS';
   render();
 }});
 
 // ── Render ────────────────────────────────────────────────────
 function render(){{
-  let lista=VEH;
+  updPills();
+  let lista=visibles(VEH);
   if(serie!=='TODAS')lista=lista.filter(v=>v.serie===serie);
-  if(q)lista=lista.filter(v=>(v.ri+' '+v.modelo+' '+v.patente+' '+v.dep+' '+v.tipo+' '+v.marca+' '+v.modelo_norm).toLowerCase().includes(q));
+  if(q)lista=lista.filter(v=>(v.ri+' '+v.modelo+' '+v.patente+' '+v.dep+' '+v.tipo+' '+(v.modelo_norm||'')).toLowerCase().includes(q));
   const el=document.getElementById('content');
   if(!lista.length){{
-    el.innerHTML='<div class="empty"><div class="empty-ico">\U0001f50d</div><div class="empty-txt">Sin resultados para "'+q+'"</div></div>';
+    el.innerHTML='<div class="empty"><div class="empty-ico">\U0001f50d</div><div class="empty-txt">Sin resultados'+(q?' para "'+q+'"':'')+'</div></div>';
     return;
   }}
   let html='';
   if(q){{
     html+='<div class="busq-info">\U0001f50d '+lista.length+' resultado'+(lista.length!==1?'s':'')+' para "'+q+'"</div>';
-    html+=renderMarcaModelo(lista,null);
+    html+=renderMM(lista);
   }}else if(serie==='TODAS'){{
     html+='<div class="grid">';
     SACT.forEach(s=>{{
       const c=SCFG[s];if(!c)return;
-      const n=VEH.filter(v=>v.serie===s).length;
+      const n=visibles(VEH).filter(v=>v.serie===s).length;
       html+=`<div class="scard" style="border-top-color:${{c.color}}" onclick="selS('${{s}}','${{c.color}}')">
         <div class="scard-ico">${{c.emoji}}</div>
         <div class="scard-n" style="color:${{c.color}}">${{n}}</div>
@@ -260,7 +330,7 @@ function render(){{
       </div>`;
     }});
     html+='</div>';
-    html+=renderMarcaModelo(lista,null);
+    html+=renderMM(lista);
   }}else{{
     const c=SCFG[serie];
     const marcas=new Set(lista.map(v=>v.marca));
@@ -268,14 +338,12 @@ function render(){{
       <div class="sec-tit">${{c.label}}</div>
       <div class="sec-sub">${{lista.length}} vehículos · ${{marcas.size}} marcas</div>
     </div></div>`;
-    html+=renderMarcaModelo(lista,c);
+    html+=renderMM(lista);
   }}
   el.innerHTML=html;
-  bindMarcas();
 }}
 
-function renderMarcaModelo(lista, cfg){{
-  // Nivel 1: agrupar por serie+marca
+function renderMM(lista){{
   const gMarca={{}};
   lista.forEach(v=>{{
     const km=v.serie+'|'+(v.marca||'SIN MARCA');
@@ -286,37 +354,54 @@ function renderMarcaModelo(lista, cfg){{
 
   return marcasOrd.map(([km,gm])=>{{
     const c=SCFG[gm.serie]||{{color:'#64748b',emoji:'\U0001f697'}};
-
-    // Nivel 2: agrupar por modelo_norm
     const gMod={{}};
     gm.veh.forEach(v=>{{
-      const kmod=km+'|'+(v.modelo_norm||'Sin modelo');
-      if(!gMod[kmod])gMod[kmod]={{mod:v.modelo_norm||'Sin modelo',tipo:v.tipo,veh:[]}};
-      gMod[kmod].veh.push(v);
+      const k=kmod(v);
+      if(!gMod[k])gMod[k]={{mod:v.modelo_norm||'Sin modelo',tipo:v.tipo,veh:[]}};
+      gMod[k].veh.push(v);
     }});
     const modsOrd=Object.entries(gMod).sort((a,b)=>b[1].veh.length-a[1].veh.length);
 
-    const modCards=modsOrd.map(([kmod,gmod])=>{{
-      const est=EST[kmod]||'';
-      const ico=est==='ok'?'✅':est==='rev'?'⚠️':est==='baja'?'❌':'○';
-      const kattr=kmod.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-      return `<div class="mod-row" data-kmod="${{kattr}}" onclick="togMod(this)">
+    const modCards=modsOrd.map(([k,gmod])=>{{
+      const est=getEst(k);
+      const ico=est.e==='ok'?'✅':est.e==='rev'?'⚠️':est.e==='baja'?'❌':'○';
+      const kattr=k.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      const esBaja=est.e==='baja';
+      const dias=esBaja?diasBaja(k):null;
+      const puedeB=esBaja&&puedesBorrar(k);
+
+      // Rango de años
+      const anios=gmod.veh.map(v=>parseInt(v.anio)).filter(Boolean);
+      const aMin=anios.length?Math.min(...anios):null;
+      const aMax=anios.length?Math.max(...anios):null;
+      const anioStr=aMin?(aMin===aMax?String(aMin):aMin+'-'+aMax):'';
+
+      // Subtítulo del modelo
+      const bajaInfo=isAdmin&&esBaja&&dias!==null?' · ❌ '+dias+'d'+(puedeB?' 🗑️':''):'';
+      const subtitulo=(gmod.tipo||'')+(anioStr?' · '+anioStr:'')+(bajaInfo||'');
+
+      // Botones de estado (solo admin)
+      const estRowHtml=isAdmin?`
+  <div class="est-row" style="display:none">
+    <button class="ebtn e-ok ${{est.e==='ok'?'on':''}}" onclick="setE(event,'ok')">✅ Activo</button>
+    <button class="ebtn e-rev ${{est.e==='rev'?'on':''}}" onclick="setE(event,'rev')">⚠️ Revisar</button>
+    <button class="ebtn e-baja ${{est.e==='baja'?'on':''}}" onclick="setE(event,'baja')">❌ De baja</button>
+    ${{puedeB?'<button class="ebtn e-del" onclick="borrar(event)">🗑️ Borrar</button>':''}}
+  </div>`:'';
+
+      return `<div class="mod-row${{esBaja?' mod-baja':''}}" data-kmod="${{kattr}}" onclick="togMod(this)">
   <div class="mod-color" style="background:${{c.color}}"></div>
   <div class="mod-info">
     <div class="mod-nombre">${{gmod.mod}}</div>
-    <div class="mod-tipo">${{gmod.tipo||''}}</div>
+    <div class="mod-tipo">${{subtitulo}}</div>
   </div>
   <div class="mod-right">
     <span class="mod-est">${{ico}}</span>
-    <span class="mod-n">${{gmod.veh.length}}</span>
+    <span class="mod-n${{esBaja?' baja-n':''}}">${{gmod.veh.length}}</span>
     <span class="mod-arrow">›</span>
   </div>
 </div>
-<div class="est-row" style="display:none">
-  <button class="ebtn e-ok ${{est==='ok'?'on':''}}" onclick="setE(event,'ok')">✅ Activo</button>
-  <button class="ebtn e-rev ${{est==='rev'?'on':''}}" onclick="setE(event,'rev')">⚠️ Revisar</button>
-  <button class="ebtn e-baja ${{est==='baja'?'on':''}}" onclick="setE(event,'baja')">❌ De baja</button>
-</div>
+${{estRowHtml}}
 <div class="vlista" style="display:none">
   ${{gmod.veh.sort((a,b)=>a.ri.localeCompare(b.ri)).map(v=>`
   <div class="vrow">
@@ -344,8 +429,7 @@ function renderMarcaModelo(lista, cfg){{
   }}).join('');
 }}
 
-function bindMarcas(){{}}
-
+// ── Interacciones ────────────────────────────────────────────
 function togMarca(km){{
   document.querySelectorAll('.marca-wrap').forEach(el=>{{
     if(el.dataset.km===km)el.classList.toggle('closed');
@@ -355,65 +439,104 @@ function togMarca(km){{
 function togMod(row){{
   const wasOpen=row.classList.contains('open');
   row.classList.toggle('open');
-  const estRow=row.nextElementSibling;
-  const vlista=estRow?.nextElementSibling;
-  if(estRow&&estRow.classList.contains('est-row'))estRow.style.display=wasOpen?'none':'flex';
-  if(vlista&&vlista.classList.contains('vlista'))vlista.style.display=wasOpen?'none':'block';
+  let next=row.nextElementSibling;
+  if(next&&next.classList.contains('est-row')){{
+    next.style.display=wasOpen?'none':'flex';
+    next=next.nextElementSibling;
+  }}
+  if(next&&next.classList.contains('vlista')){{
+    next.style.display=wasOpen?'none':'block';
+  }}
 }}
 
 function setE(e,val){{
+  e.stopPropagation();
+  if(!isAdmin)return;
+  const row=e.target.closest('.est-row');
+  const modRow=row?.previousElementSibling;
+  const k=modRow?.dataset?.kmod;
+  if(!k)return;
+  const curr=getEst(k);
+  const newE=curr.e===val?'':val;
+  EST[k]=newE?{{e:newE,fb:newE==='baja'?Date.now():curr.fb}}:{{e:'',fb:null}};
+  localStorage.setItem(SK,JSON.stringify(EST));
+  updSum();
+  // Actualizar UI sin re-render
+  row?.querySelectorAll('.ebtn').forEach(b=>b.classList.remove('on'));
+  const cls={{'ok':'e-ok','rev':'e-rev','baja':'e-baja'}}[newE];
+  if(cls)row?.querySelector('.'+cls)?.classList.add('on');
+  if(modRow){{
+    const ico=modRow.querySelector('.mod-est');
+    if(ico)ico.textContent=newE==='ok'?'✅':newE==='rev'?'⚠️':newE==='baja'?'❌':'○';
+    modRow.classList.toggle('mod-baja',newE==='baja');
+    const nc=modRow.querySelector('.mod-n');
+    if(nc)nc.className='mod-n'+(newE==='baja'?' baja-n':'');
+    // Mostrar botón borrar si corresponde
+    const delBtn=row?.querySelector('.e-del');
+    if(delBtn)delBtn.style.display='';
+    else if(newE==='baja'&&puedesBorrar(k)){{
+      const btn=document.createElement('button');
+      btn.className='ebtn e-del';
+      btn.textContent='🗑️ Borrar';
+      btn.onclick=borrar;
+      row.appendChild(btn);
+    }}
+  }}
+}}
+
+function borrar(e){{
   e.stopPropagation();
   const row=e.target.closest('.est-row');
   const modRow=row?.previousElementSibling;
   const k=modRow?.dataset?.kmod;
   if(!k)return;
-  EST[k]=EST[k]===val?'':val;
+  const nombre=k.split('|')[2]||k;
+  if(!confirm('¿Borrar definitivamente "'+nombre+'"?\\n\\nEsta acción no se puede deshacer. El modelo y todos sus vehículos desaparecerán del sistema.'))return;
+  DELETED.add(k);
+  localStorage.setItem(SK_DEL,JSON.stringify([...DELETED]));
+  delete EST[k];
   localStorage.setItem(SK,JSON.stringify(EST));
   updSum();
-  row?.querySelectorAll('.ebtn').forEach(b=>b.classList.remove('on'));
-  const cls={{'ok':'e-ok','rev':'e-rev','baja':'e-baja'}}[EST[k]];
-  if(cls)row?.querySelector('.'+cls)?.classList.add('on');
-  if(modRow?.classList.contains('mod-row')){{
-    const ico=modRow.querySelector('.mod-est');
-    if(ico)ico.textContent=EST[k]==='ok'?'✅':EST[k]==='rev'?'⚠️':EST[k]==='baja'?'❌':'○';
-  }}
+  render();
 }}
 
 function updSum(){{
+  const todos=VEH.filter(v=>!DELETED.has(kmod(v)));
+  const kmods=new Set(todos.map(v=>kmod(v)));
   let ok=0,rev=0,baja=0;
-  Object.values(EST).forEach(e=>{{if(e==='ok')ok++;else if(e==='rev')rev++;else if(e==='baja')baja++}});
+  kmods.forEach(k=>{{
+    const e=getEst(k).e;
+    if(e==='ok')ok++;
+    else if(e==='rev')rev++;
+    else if(e==='baja')baja++;
+  }});
   document.getElementById('s-ok').textContent=ok;
   document.getElementById('s-rev').textContent=rev;
-  document.getElementById('s-baja').textContent=baja;
+  document.getElementById('s-baja').textContent=isAdmin?baja:0;
 }}
 
+// ── Export CSV ───────────────────────────────────────────────
 function exportar(){{
-  const gs={{}};
-  VEH.forEach(v=>{{
-    const k=v.serie+'|'+(v.marca||'SIN MARCA')+'|'+(v.modelo_norm||'Sin modelo');
-    if(!gs[k])gs[k]={{marca:v.marca,mod:v.modelo_norm,serie:v.serie,tipo:v.tipo,veh:[]}};
-    gs[k].veh.push(v);
-  }});
-  let txt='FLOTA MUNICIPAL BAHIA BLANCA\\n';
-  txt+='Generado: '+new Date().toLocaleString('es-AR')+'\\n\\n';
-  [['ok','ACTIVOS'],['rev','A REVISAR'],['baja','DE BAJA'],['','SIN CLASIFICAR']].forEach(([est,tit])=>{{
-    const items=Object.entries(gs).filter(([k])=>(EST[k]||'')===est);
-    if(!items.length)return;
-    const total=items.reduce((s,[,g])=>s+g.veh.length,0);
-    txt+='=== '+tit+' ('+total+' unidades / '+items.length+' modelos) ===\\n';
-    items.sort((a,b)=>a[1].marca.localeCompare(b[1].marca)||a[1].mod.localeCompare(b[1].mod));
-    items.forEach(([k,g])=>{{
-      txt+='  '+g.marca+' '+g.mod+' — '+g.veh.length+' unidad'+(g.veh.length!==1?'es':'')+' | RIs: '+g.veh.map(v=>v.ri).join(', ')+'\\n';
-    }});
-    txt+='\\n';
+  const esc=x=>'"'+(x||'').toString().replace(/"/g,'""')+'"';
+  let csv='RI,Serie,Tipo,Modelo,Marca,Año,Patente,Dependencia,Estado,Dias_de_baja\\n';
+  const sorted=[...VEH].sort((a,b)=>a.serie.localeCompare(b.serie)||a.ri.localeCompare(b.ri));
+  sorted.forEach(v=>{{
+    const k=kmod(v);
+    if(DELETED.has(k))return;
+    const est=getEst(k);
+    const estado=est.e==='ok'?'Activo':est.e==='rev'?'Revisar':est.e==='baja'?'De baja':'Sin clasificar';
+    const dias=est.e==='baja'&&est.fb?Math.floor((Date.now()-est.fb)/(24*60*60*1000)):'';
+    csv+=esc(v.ri)+','+esc(v.serie)+','+esc(v.tipo)+','+esc(v.modelo_norm)+','+esc(v.marca)+','+esc(v.anio)+','+esc(v.patente)+','+esc(v.dep)+','+esc(estado)+','+esc(dias)+'\\n';
   }});
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([txt],{{type:'text/plain;charset=utf-8'}}));
-  a.download='flota-'+new Date().toISOString().slice(0,10)+'.txt';
+  a.href=URL.createObjectURL(new Blob([csv],{{type:'text/csv;charset=utf-8'}}));
+  a.download='flota-'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
 }}
 
-render();updSum();
+updAdminUI();
+render();
+updSum();
 </script>
 </body>
 </html>'''
