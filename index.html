@@ -349,26 +349,18 @@ function exportar(){
     if(!grupos[km])grupos[km]={tipo,mod,serie:v.serie,veh:[]};
     grupos[km].veh.push(v);
   });
-  let txt='FLOTA MUNICIPAL - BAHIA BLANCA
-';
-  txt+='Generado: '+new Date().toLocaleString('es-AR')+'
-
-';
+  let txt='FLOTA MUNICIPAL - BAHIA BLANCA\n';
+  txt+='Generado: '+new Date().toLocaleString('es-AR')+'\n\n';
   [['ok','ACTIVOS'],['rev','A REVISAR'],['baja','DE BAJA'],['','SIN CLASIFICAR']].forEach(([est,tit])=>{
     const items=Object.entries(grupos).filter(([k])=>(EST[k]||'')===est);
     if(!items.length)return;
     const total=items.reduce((s,[,g])=>s+g.veh.length,0);
-    txt+='=== '+tit+' ('+items.length+' modelos / '+total+' unidades) ===
-';
+    txt+='=== '+tit+' ('+items.length+' modelos / '+total+' unidades) ===\n';
     items.sort((a,b)=>a[1].tipo.localeCompare(b[1].tipo));
     items.forEach(([k,g])=>{
-      txt+='  ['+g.tipo+'] '+g.mod+' — '+g.veh.length+' unidad'+(g.veh.length!==1?'es':'')+'
-';
-      txt+='    RIs: '+g.veh.map(v=>v.ri).join(', ')+'
-';
+      txt+='  ['+g.tipo+'] '+g.mod+' — '+g.veh.length+' unidad'+(g.veh.length!==1?'es':'')+' | RIs: '+g.veh.map(v=>v.ri).join(', ')+'\n';
     });
-    txt+='
-';
+    txt+='\n';
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));
