@@ -321,7 +321,7 @@ function renderMarcaModelo(lista, cfg){
     }).join('');
 
     const initials=gm.marca.split(' ').map(w=>w[0]||'').join('').substring(0,3);
-    return `<div class="marca-wrap" data-km="${km.replace(/"/g,'&quot;')}">
+    return `<div class="marca-wrap closed" data-km="${km.replace(/"/g,'&quot;')}">
   <div class="marca-hdr" style="background:${c.color}" onclick="togMarca('${km.replace(/'/g,"\\'")}')" >
     <div class="marca-logo">${initials}</div>
     <div class="marca-nombre">${gm.marca}</div>
