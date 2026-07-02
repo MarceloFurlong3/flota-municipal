@@ -136,10 +136,13 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
 .mod-row.open + .vlista{{display:block}}
 .vrow{{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f8fafc}}
 .vrow:last-child{{border-bottom:none}}
-.vri{{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;background:#f0f4f9;border-radius:7px;padding:3px 8px;white-space:nowrap;color:var(--dark);min-width:46px;text-align:center}}
+.vri-box{{display:flex;flex-direction:column;align-items:center;background:#f0f4f9;border-radius:7px;padding:3px 8px;min-width:44px;text-align:center;flex-shrink:0}}
+.vri-s{{font-size:9px;font-weight:700;color:var(--muted);line-height:1}}
+.vri-n{{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--dark);line-height:1.1}}
 .vdata{{flex:1;min-width:0}}
 .vpat{{font-size:12px;font-weight:700}}
-.vdep{{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+.vtipo{{font-size:9px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.vdep{{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}}
 .vanio{{font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0}}
 
 /* EMPTY */
@@ -296,8 +299,8 @@ function renderMarcaModelo(lista, cfg){{
     const modCards=modsOrd.map(([kmod,gmod])=>{{
       const est=EST[kmod]||'';
       const ico=est==='ok'?'✅':est==='rev'?'⚠️':est==='baja'?'❌':'○';
-      const kj=JSON.stringify(kmod);
-      return `<div class="mod-row" onclick="togMod(this,${{kj}})">
+      const kattr=kmod.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      return `<div class="mod-row" data-kmod="${{kattr}}" onclick="togMod(this)">
   <div class="mod-color" style="background:${{c.color}}"></div>
   <div class="mod-info">
     <div class="mod-nombre">${{gmod.mod}}</div>
@@ -310,15 +313,19 @@ function renderMarcaModelo(lista, cfg){{
   </div>
 </div>
 <div class="est-row" style="display:none">
-  <button class="ebtn e-ok ${{est==='ok'?'on':''}}" onclick="setE(event,${{kj}},'ok')">✅ Activo</button>
-  <button class="ebtn e-rev ${{est==='rev'?'on':''}}" onclick="setE(event,${{kj}},'rev')">⚠️ Revisar</button>
-  <button class="ebtn e-baja ${{est==='baja'?'on':''}}" onclick="setE(event,${{kj}},'baja')">❌ De baja</button>
+  <button class="ebtn e-ok ${{est==='ok'?'on':''}}" onclick="setE(event,'ok')">✅ Activo</button>
+  <button class="ebtn e-rev ${{est==='rev'?'on':''}}" onclick="setE(event,'rev')">⚠️ Revisar</button>
+  <button class="ebtn e-baja ${{est==='baja'?'on':''}}" onclick="setE(event,'baja')">❌ De baja</button>
 </div>
 <div class="vlista" style="display:none">
   ${{gmod.veh.sort((a,b)=>a.ri.localeCompare(b.ri)).map(v=>`
   <div class="vrow">
-    <span class="vri">${{v.ri}}</span>
-    <div class="vdata"><div class="vpat">${{v.patente||'Sin patente'}}</div><div class="vdep">${{v.dep||'—'}}</div></div>
+    <div class="vri-box"><span class="vri-s">${{v.ri[0]}}</span><span class="vri-n">${{v.ri.slice(1)}}</span></div>
+    <div class="vdata">
+      <div class="vpat">${{v.patente||'Sin patente'}}</div>
+      <div class="vtipo">${{v.tipo||''}}</div>
+      <div class="vdep">${{v.dep||'—'}}</div>
+    </div>
     <span class="vanio">${{v.anio||'—'}}</span>
   </div>`).join('')}}
 </div>`;
@@ -345,7 +352,7 @@ function togMarca(km){{
   }});
 }}
 
-function togMod(row, kmod){{
+function togMod(row){{
   const wasOpen=row.classList.contains('open');
   row.classList.toggle('open');
   const estRow=row.nextElementSibling;
@@ -354,18 +361,18 @@ function togMod(row, kmod){{
   if(vlista&&vlista.classList.contains('vlista'))vlista.style.display=wasOpen?'none':'block';
 }}
 
-function setE(e,k,val){{
+function setE(e,val){{
   e.stopPropagation();
+  const row=e.target.closest('.est-row');
+  const modRow=row?.previousElementSibling;
+  const k=modRow?.dataset?.kmod;
+  if(!k)return;
   EST[k]=EST[k]===val?'':val;
   localStorage.setItem(SK,JSON.stringify(EST));
   updSum();
-  const btn=e.target;
-  const row=btn.closest('.est-row');
   row?.querySelectorAll('.ebtn').forEach(b=>b.classList.remove('on'));
   const cls={{'ok':'e-ok','rev':'e-rev','baja':'e-baja'}}[EST[k]];
   if(cls)row?.querySelector('.'+cls)?.classList.add('on');
-  // Update ico in mod-row
-  const modRow=row?.previousElementSibling;
   if(modRow?.classList.contains('mod-row')){{
     const ico=modRow.querySelector('.mod-est');
     if(ico)ico.textContent=EST[k]==='ok'?'✅':EST[k]==='rev'?'⚠️':EST[k]==='baja'?'❌':'○';
@@ -383,7 +390,7 @@ function updSum(){{
 function exportar(){{
   const gs={{}};
   VEH.forEach(v=>{{
-    const k=v.serie+'|'+v.marca+'|'+(v.modelo_norm||'Sin modelo');
+    const k=v.serie+'|'+(v.marca||'SIN MARCA')+'|'+(v.modelo_norm||'Sin modelo');
     if(!gs[k])gs[k]={{marca:v.marca,mod:v.modelo_norm,serie:v.serie,tipo:v.tipo,veh:[]}};
     gs[k].veh.push(v);
   }});
