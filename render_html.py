@@ -1,10 +1,12 @@
 """
 Genera index.html — Flota Municipal Bahía Blanca
-Admin mode, estados por modelo, filtro de bajas, export CSV.
+Estados por RI individual guardados en Supabase.
 """
 import json
 
-PIN_ADMIN = 'admin'   # Cambiar si se quiere otra clave
+PIN_ADMIN   = 'admin'
+SUPA_URL    = 'https://sugkmcdngvtvwzglodkh.supabase.co'
+SUPA_KEY    = 'sb_publishable_ZtJOsrwumSdUOPonai0m0A_LhojWgXm'
 
 def generar_html(vehiculos, SERIES, series_activas):
     data_js  = json.dumps(vehiculos, ensure_ascii=False)
@@ -89,41 +91,46 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
 .mod-info{{flex:1;min-width:0}}
 .mod-nombre{{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 .mod-tipo{{font-size:10px;color:var(--muted);margin-top:1px}}
-.mod-right{{display:flex;align-items:center;gap:7px;flex-shrink:0}}
+.mod-right{{display:flex;align-items:center;gap:6px;flex-shrink:0}}
 .mod-n{{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;background:var(--bg);border-radius:7px;padding:3px 9px;min-width:30px;text-align:center}}
-.mod-est{{font-size:16px}}
+.mod-agg{{display:flex;gap:4px;font-size:11px;font-weight:700}}
+.mod-agg span{{padding:2px 6px;border-radius:6px}}
+.mod-agg .agg-ok{{background:#dcfce7;color:#16a34a}}
+.mod-agg .agg-rev{{background:#fef9c3;color:#d97706}}
+.mod-agg .agg-baja{{background:#fee2e2;color:#dc2626}}
 .mod-arrow{{color:var(--muted);font-size:13px;transition:transform .2s}}
 .mod-row.open .mod-arrow{{transform:rotate(90deg)}}
 
-/* BAJA (admin view) */
-.mod-row.mod-baja{{border-left:3px solid #dc2626;opacity:.7}}
-.mod-row.mod-baja .mod-nombre{{text-decoration:line-through;color:var(--muted)}}
-.baja-n{{color:#dc2626!important}}
-
-/* ESTADO BOTONES */
-.est-row{{display:flex;gap:5px;padding:7px 10px 9px;background:#fff;border:1px solid var(--border);border-top:none;border-bottom-left-radius:10px;border-bottom-right-radius:10px;margin-bottom:5px}}
-.ebtn{{flex:1;padding:8px 4px;border:1.5px solid var(--border);border-radius:9px;background:#f8fafc;color:var(--muted);font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .12s;-webkit-appearance:none}}
-.ebtn:active{{transform:scale(.95)}}
-.e-ok.on{{background:#16a34a;color:#fff;border-color:#16a34a}}
-.e-rev.on{{background:#d97706;color:#fff;border-color:#d97706}}
-.e-baja.on{{background:#dc2626;color:#fff;border-color:#dc2626}}
-.e-del{{background:#fef2f2;color:#dc2626;border-color:#fca5a5;flex:0 0 auto;padding:8px 10px}}
-.e-del:hover{{background:#dc2626;color:#fff;border-color:#dc2626}}
-
 /* VEHÍCULOS LISTA */
 .vlista{{display:none;background:#fff;border:1px solid var(--border);border-top:1px solid #f0f4f9;border-bottom-left-radius:10px;border-bottom-right-radius:10px;margin-bottom:5px;margin-top:-5px;overflow:hidden}}
-.mod-row.open + .est-row + .vlista{{display:block}}
 .mod-row.open + .vlista{{display:block}}
 .vrow{{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f8fafc}}
 .vrow:last-child{{border-bottom:none}}
+.vrow.v-baja{{opacity:.5;border-left:3px solid #dc2626}}
 .vri-box{{display:flex;flex-direction:column;align-items:center;background:#f0f4f9;border-radius:7px;padding:3px 8px;min-width:44px;text-align:center;flex-shrink:0}}
+.vrow.v-baja .vri-box{{background:#fee2e2}}
 .vri-s{{font-size:9px;font-weight:700;color:var(--muted);line-height:1}}
 .vri-n{{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--dark);line-height:1.1}}
 .vdata{{flex:1;min-width:0}}
 .vpat{{font-size:12px;font-weight:700}}
+.vrow.v-baja .vpat{{text-decoration:line-through;color:var(--muted)}}
 .vtipo{{font-size:9px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 .vdep{{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}}
 .vanio{{font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0}}
+
+/* BOTONES DE ESTADO POR RI (solo admin) */
+.vest{{display:none;gap:4px;flex-shrink:0}}
+.admin-mode .vest{{display:flex}}
+.vebtn{{border:1.5px solid var(--border);border-radius:7px;background:#f8fafc;padding:5px 7px;font-size:13px;cursor:pointer;-webkit-appearance:none;transition:all .12s;line-height:1}}
+.vebtn:active{{transform:scale(.9)}}
+.vebtn.e-ok.on{{background:#16a34a;border-color:#16a34a}}
+.vebtn.e-rev.on{{background:#d97706;border-color:#d97706}}
+.vebtn.e-baja.on{{background:#dc2626;border-color:#dc2626}}
+
+/* LOADING */
+.loading{{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;font-weight:700}}
+.loading-dot{{display:inline-block;animation:blink 1s infinite}}
+@keyframes blink{{0%,100%{{opacity:1}}50%{{opacity:.2}}}}
 
 /* EMPTY */
 .empty{{text-align:center;padding:50px 20px}}
@@ -164,17 +171,16 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
 </div>
 
 <div class="pills" id="pills"></div>
-<div class="content" id="content"></div>
+<div class="content" id="content"><div class="loading">Cargando estados<span class="loading-dot">...</span></div></div>
 
 <div class="btm">
-  <div class="sblk"><div class="sn ok" id="s-ok">0</div><div class="slbl">✅ Activos</div></div>
+  <div class="sblk"><div class="sn ok" id="s-ok">—</div><div class="slbl">✅ Activos</div></div>
   <div class="dvd"></div>
-  <div class="sblk"><div class="sn rev" id="s-rev">0</div><div class="slbl">⚠️ Revisar</div></div>
+  <div class="sblk"><div class="sn rev" id="s-rev">—</div><div class="slbl">⚠️ Revisar</div></div>
   <div class="dvd"></div>
-  <div class="sblk"><div class="sn baja" id="s-baja">0</div><div class="slbl">❌ De baja</div></div>
+  <div class="sblk"><div class="sn baja" id="s-baja">—</div><div class="slbl">❌ De baja</div></div>
   <div class="dvd"></div>
   <button class="xbtn" onclick="exportar()">\U0001f4cb CSV</button>
-  <button class="xbtn" id="btn-compartir" style="display:none;background:#16a34a" onclick="compartirEstados()">\U0001f4e4 Estados</button>
 </div>
 
 <script>
@@ -182,25 +188,62 @@ const VEH={data_js};
 const SCFG={SCFG_JS};
 const SACT={SACT_JS};
 const PIN={PIN_JS};
-const SK='flota_bhi_v4';
-const SK_DEL='flota_bhi_del';
+const SUPA_URL='{SUPA_URL}';
+const SUPA_KEY='{SUPA_KEY}';
 
-// ── Carga y migración de estados ─────────────────────────────
-let EST={{}};
-try {{
-  const raw=localStorage.getItem(SK)||localStorage.getItem('flota_bhi_v3')||'{{}}';
-  const old=JSON.parse(raw);
-  Object.entries(old).forEach(([k,v])=>{{
-    if(typeof v==='string') EST[k]=v?{{e:v,fb:v==='baja'?0:null}}:{{e:'',fb:null}};
-    else EST[k]=v;
-  }});
-}} catch(err){{EST={{}};}}
-
-let DELETED=new Set();
-try{{DELETED=new Set(JSON.parse(localStorage.getItem(SK_DEL)||'[]'));}}catch(err){{}}
-
+let EST={{}};  // {{ ri: {{e:'ok'|'rev'|'baja'|'', fb:timestamp|null}} }}
 let isAdmin=sessionStorage.getItem('fleet_admin')==='1';
 let serie='TODAS', q='';
+
+// ── Supabase ─────────────────────────────────────────────────
+async function cargarEstados(){{
+  try{{
+    const res=await fetch(SUPA_URL+'/rest/v1/flota_estados?select=*&limit=10000',{{
+      headers:{{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
+    }});
+    const rows=await res.json();
+    EST={{}};
+    if(Array.isArray(rows))rows.forEach(r=>{{
+      EST[r.ri]={{e:r.estado||'',fb:r.fecha_baja?new Date(r.fecha_baja).getTime():null}};
+    }});
+  }}catch(err){{EST={{}};}}
+}}
+
+async function guardarEstado(ri,estado,fb){{
+  const body={{
+    ri,
+    estado:estado||null,
+    fecha_baja:fb?new Date(fb).toISOString():null,
+    updated_at:new Date().toISOString()
+  }};
+  try{{
+    await fetch(SUPA_URL+'/rest/v1/flota_estados',{{
+      method:'POST',
+      headers:{{
+        'apikey':SUPA_KEY,
+        'Authorization':'Bearer '+SUPA_KEY,
+        'Content-Type':'application/json',
+        'Prefer':'resolution=merge-duplicates'
+      }},
+      body:JSON.stringify(body)
+    }});
+  }}catch(err){{}}
+}}
+
+// ── Estado helpers ───────────────────────────────────────────
+function getEst(ri){{
+  const v=EST[ri];
+  if(!v)return {{e:'',fb:null}};
+  return {{e:v.e||'',fb:v.fb||null}};
+}}
+
+function isBaja(ri){{return getEst(ri).e==='baja';}}
+
+function diasBaja(ri){{
+  const fb=getEst(ri).fb;
+  if(!fb)return null;
+  return Math.floor((Date.now()-fb)/(24*60*60*1000));
+}}
 
 // ── Admin ────────────────────────────────────────────────────
 function toggleAdmin(){{
@@ -226,68 +269,20 @@ function updAdminUI(){{
     btn.textContent='\U0001f513 ADMIN';
     btn.style.background='rgba(22,163,74,.8)';
     btn.style.borderColor='#16a34a';
+    document.body.classList.add('admin-mode');
   }}else{{
     btn.textContent='\U0001f512';
     btn.style.background='rgba(255,255,255,.1)';
     btn.style.borderColor='rgba(255,255,255,.2)';
+    document.body.classList.remove('admin-mode');
   }}
-  const cb=document.getElementById('btn-compartir');
-  if(cb)cb.style.display=isAdmin?'':'none';
-}}
-
-function compartirEstados(){{
-  const payload=JSON.stringify({{est:EST,del:[...DELETED]}});
-  const ta=document.createElement('textarea');
-  ta.value=payload;
-  ta.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90vw;height:40vh;z-index:9999;padding:12px;font-size:12px;border-radius:10px;border:2px solid #16a34a;background:#0f172a;color:#fff;font-family:monospace';
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998';
-  const cerrar=document.createElement('button');
-  cerrar.textContent='✕ Cerrar';
-  cerrar.style.cssText='position:fixed;top:calc(50% - 21vh - 40px);left:50%;transform:translateX(-50%);z-index:9999;padding:8px 20px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px';
-  const copiar=document.createElement('button');
-  copiar.textContent='\U0001f4cb Copiar todo';
-  copiar.style.cssText='position:fixed;top:calc(50% + 21vh + 8px);left:50%;transform:translateX(-50%);z-index:9999;padding:10px 24px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px';
-  copiar.onclick=()=>{{navigator.clipboard.writeText(payload).then(()=>{{copiar.textContent='✅ Copiado!';}});}};
-  cerrar.onclick=()=>{{overlay.remove();ta.remove();cerrar.remove();copiar.remove();}};
-  overlay.onclick=cerrar.onclick;
-  document.body.append(overlay,ta,cerrar,copiar);
-  ta.focus();ta.select();
-}}
-
-// ── Estado helpers ───────────────────────────────────────────
-function getEst(k){{
-  const v=EST[k];
-  if(!v)return {{e:'',fb:null}};
-  if(typeof v==='string')return {{e:v,fb:null}};
-  return {{e:v.e||'',fb:v.fb||null}};
-}}
-
-function isBaja(k){{return getEst(k).e==='baja';}}
-
-function diasBaja(k){{
-  const fb=getEst(k).fb;
-  if(!fb)return null;
-  return Math.floor((Date.now()-fb)/(24*60*60*1000));
-}}
-
-function puedesBorrar(k){{
-  const est=getEst(k);
-  if(est.e!=='baja')return false;
-  if(!est.fb)return true;
-  return (Date.now()-est.fb)>=30*24*60*60*1000;
 }}
 
 // ── Filtrado ─────────────────────────────────────────────────
 function kmod(v){{return v.serie+'|'+(v.marca||'SIN MARCA')+'|'+(v.modelo_norm||'Sin modelo');}}
 
 function visibles(lista){{
-  return lista.filter(v=>{{
-    const k=kmod(v);
-    if(DELETED.has(k))return false;
-    if(!isAdmin&&isBaja(k))return false;
-    return true;
-  }});
+  return lista.filter(v=>isAdmin||!isBaja(v.ri));
 }}
 
 // ── Pills ────────────────────────────────────────────────────
@@ -295,9 +290,9 @@ const pillsEl=document.getElementById('pills');
 
 function mkPill(s,lbl,n,col){{
   const b=document.createElement('button');
-  b.className='pill'+(s==='TODAS'?' sel':'');
+  b.className='pill'+(s===serie?' sel':'');
   b.id='pill-'+s;
-  if(s==='TODAS')b.style.background='#0f172a';
+  if(s===serie)b.style.background=col||'#0f172a';
   b.innerHTML=lbl+(n!==undefined?` <span class="cnt">${{n}}</span>`:'');
   b.onclick=()=>selS(s,col);
   pillsEl.appendChild(b);
@@ -311,11 +306,9 @@ function updPills(){{
     const c=SCFG[s];if(!c)return;
     mkPill(s,c.emoji+' '+c.label,vis.filter(v=>v.serie===s).length,c.color);
   }});
-  const p=document.getElementById('pill-'+serie);
-  if(p){{p.classList.add('sel');p.style.background=serie==='TODAS'?'#0f172a':(SCFG[serie]?.color||'#0f172a');}}
 }}
 
-function selS(s,col){{
+function selS(s){{
   serie=s;q='';document.getElementById('buscar').value='';
   render();
 }}
@@ -346,7 +339,7 @@ function render(){{
     SACT.forEach(s=>{{
       const c=SCFG[s];if(!c)return;
       const n=visibles(VEH).filter(v=>v.serie===s).length;
-      html+=`<div class="scard" style="border-top-color:${{c.color}}" onclick="selS('${{s}}','${{c.color}}')">
+      html+=`<div class="scard" style="border-top-color:${{c.color}}" onclick="selS('${{s}}')">
         <div class="scard-ico">${{c.emoji}}</div>
         <div class="scard-n" style="color:${{c.color}}">${{n}}</div>
         <div class="scard-lbl">${{c.label}}</div>
@@ -386,57 +379,62 @@ function renderMM(lista){{
     const modsOrd=Object.entries(gMod).sort((a,b)=>b[1].veh.length-a[1].veh.length);
 
     const modCards=modsOrd.map(([k,gmod])=>{{
-      const est=getEst(k);
-      const ico=est.e==='ok'?'✅':est.e==='rev'?'⚠️':est.e==='baja'?'❌':'○';
-      const kattr=k.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-      const esBaja=est.e==='baja';
-      const dias=esBaja?diasBaja(k):null;
-      const puedeB=esBaja&&puedesBorrar(k);
+      // Contadores por RI dentro del modelo
+      let nOk=0,nRev=0,nBaja=0;
+      gmod.veh.forEach(v=>{{
+        const e=getEst(v.ri).e;
+        if(e==='ok')nOk++;
+        else if(e==='rev')nRev++;
+        else if(e==='baja')nBaja++;
+      }});
 
-      // Rango de años
+      const aggHtml=[
+        nOk?`<span class="agg-ok">✅${{nOk}}</span>`:'',
+        nRev?`<span class="agg-rev">⚠️${{nRev}}</span>`:'',
+        nBaja?`<span class="agg-baja">❌${{nBaja}}</span>`:''
+      ].join('');
+
       const anios=gmod.veh.map(v=>parseInt(v.anio)).filter(Boolean);
       const aMin=anios.length?Math.min(...anios):null;
       const aMax=anios.length?Math.max(...anios):null;
       const anioStr=aMin?(aMin===aMax?String(aMin):aMin+'-'+aMax):'';
+      const subtitulo=(gmod.tipo||'')+(anioStr?' · '+anioStr:'');
 
-      // Subtítulo del modelo
-      const bajaInfo=isAdmin&&esBaja&&dias!==null?' · ❌ '+dias+'d'+(puedeB?' 🗑️':''):'';
-      const subtitulo=(gmod.tipo||'')+(anioStr?' · '+anioStr:'')+(bajaInfo||'');
+      const vrows=gmod.veh.sort((a,b)=>a.ri.localeCompare(b.ri)).map(v=>{{
+        const est=getEst(v.ri);
+        const esBaja=est.e==='baja';
+        const dias=esBaja?diasBaja(v.ri):null;
+        const diasTxt=isAdmin&&esBaja&&dias!==null?` <span style="font-size:9px;color:#dc2626">(${{dias}}d)</span>`:'';
+        const riEsc=v.ri.replace(/'/g,"\\'");
+        return `<div class="vrow${{esBaja?' v-baja':''}}" data-ri="${{v.ri}}">
+  <div class="vri-box"><span class="vri-s">${{v.ri[0]}}</span><span class="vri-n">${{v.ri.slice(1)}}</span></div>
+  <div class="vdata">
+    <div class="vpat">${{v.patente||'Sin patente'}}${{diasTxt}}</div>
+    <div class="vtipo">${{v.tipo||''}}</div>
+    <div class="vdep">${{v.dep||'—'}}</div>
+  </div>
+  <div class="vest">
+    <button class="vebtn e-ok${{est.e==='ok'?' on':''}}" onclick="setVehE(event,'${{riEsc}}','ok')" title="Activo">✅</button>
+    <button class="vebtn e-rev${{est.e==='rev'?' on':''}}" onclick="setVehE(event,'${{riEsc}}','rev')" title="Revisar">⚠️</button>
+    <button class="vebtn e-baja${{est.e==='baja'?' on':''}}" onclick="setVehE(event,'${{riEsc}}','baja')" title="De baja">❌</button>
+  </div>
+  <span class="vanio">${{v.anio||'—'}}</span>
+</div>`;
+      }}).join('');
 
-      // Botones de estado (solo admin)
-      const estRowHtml=isAdmin?`
-  <div class="est-row" style="display:none">
-    <button class="ebtn e-ok ${{est.e==='ok'?'on':''}}" onclick="setE(event,'ok')">✅ Activo</button>
-    <button class="ebtn e-rev ${{est.e==='rev'?'on':''}}" onclick="setE(event,'rev')">⚠️ Revisar</button>
-    <button class="ebtn e-baja ${{est.e==='baja'?'on':''}}" onclick="setE(event,'baja')">❌ De baja</button>
-    ${{puedeB?'<button class="ebtn e-del" onclick="borrar(event)">🗑️ Borrar</button>':''}}
-  </div>`:'';
-
-      return `<div class="mod-row${{esBaja?' mod-baja':''}}" data-kmod="${{kattr}}" onclick="togMod(this)">
+      return `<div class="mod-row" onclick="togMod(this)">
   <div class="mod-color" style="background:${{c.color}}"></div>
   <div class="mod-info">
     <div class="mod-nombre">${{gmod.mod}}</div>
     <div class="mod-tipo">${{subtitulo}}</div>
   </div>
   <div class="mod-right">
-    <span class="mod-est">${{ico}}</span>
-    <span class="mod-n${{esBaja?' baja-n':''}}">${{gmod.veh.length}}</span>
+    <div class="mod-agg">${{aggHtml}}</div>
+    <span class="mod-n">${{gmod.veh.length}}</span>
     <span class="mod-arrow">›</span>
   </div>
 </div>
-${{estRowHtml}}
-<div class="vlista" style="display:none">
-  ${{gmod.veh.sort((a,b)=>a.ri.localeCompare(b.ri)).map(v=>`
-  <div class="vrow">
-    <div class="vri-box"><span class="vri-s">${{v.ri[0]}}</span><span class="vri-n">${{v.ri.slice(1)}}</span></div>
-    <div class="vdata">
-      <div class="vpat">${{v.patente||'Sin patente'}}</div>
-      <div class="vtipo">${{v.tipo||''}}</div>
-      <div class="vdep">${{v.dep||'—'}}</div>
-    </div>
-    <span class="vanio">${{v.anio||'—'}}</span>
-  </div>`).join('')}}
-</div>`;
+<div class="vlista" style="display:none">${{vrows}}</div>`;
     }}).join('');
 
     const initials=gm.marca.split(' ').map(w=>w[0]||'').join('').substring(0,3);
@@ -462,73 +460,65 @@ function togMarca(km){{
 function togMod(row){{
   const wasOpen=row.classList.contains('open');
   row.classList.toggle('open');
-  let next=row.nextElementSibling;
-  if(next&&next.classList.contains('est-row')){{
-    next.style.display=wasOpen?'none':'flex';
-    next=next.nextElementSibling;
-  }}
+  const next=row.nextElementSibling;
   if(next&&next.classList.contains('vlista')){{
     next.style.display=wasOpen?'none':'block';
   }}
 }}
 
-function setE(e,val){{
+async function setVehE(e,ri,val){{
   e.stopPropagation();
   if(!isAdmin)return;
-  const row=e.target.closest('.est-row');
-  const modRow=row?.previousElementSibling;
-  const k=modRow?.dataset?.kmod;
-  if(!k)return;
-  const curr=getEst(k);
+  const curr=getEst(ri);
   const newE=curr.e===val?'':val;
-  EST[k]=newE?{{e:newE,fb:newE==='baja'?Date.now():curr.fb}}:{{e:'',fb:null}};
-  localStorage.setItem(SK,JSON.stringify(EST));
-  updSum();
-  // Actualizar UI sin re-render
-  row?.querySelectorAll('.ebtn').forEach(b=>b.classList.remove('on'));
-  const cls={{'ok':'e-ok','rev':'e-rev','baja':'e-baja'}}[newE];
-  if(cls)row?.querySelector('.'+cls)?.classList.add('on');
-  if(modRow){{
-    const ico=modRow.querySelector('.mod-est');
-    if(ico)ico.textContent=newE==='ok'?'✅':newE==='rev'?'⚠️':newE==='baja'?'❌':'○';
-    modRow.classList.toggle('mod-baja',newE==='baja');
-    const nc=modRow.querySelector('.mod-n');
-    if(nc)nc.className='mod-n'+(newE==='baja'?' baja-n':'');
-    // Mostrar botón borrar si corresponde
-    const delBtn=row?.querySelector('.e-del');
-    if(delBtn)delBtn.style.display='';
-    else if(newE==='baja'&&puedesBorrar(k)){{
-      const btn=document.createElement('button');
-      btn.className='ebtn e-del';
-      btn.textContent='🗑️ Borrar';
-      btn.onclick=borrar;
-      row.appendChild(btn);
+  const fb=newE==='baja'?Date.now():(newE?curr.fb:null);
+
+  // Optimistic update
+  EST[ri]={{e:newE,fb}};
+
+  // Guardar en Supabase
+  guardarEstado(ri,newE,fb);
+
+  // Actualizar UI del vrow
+  const vrow=e.target.closest('.vrow');
+  if(vrow){{
+    vrow.querySelectorAll('.vebtn').forEach(b=>b.classList.remove('on'));
+    if(newE)vrow.querySelector('.e-'+newE)?.classList.add('on');
+    vrow.classList.toggle('v-baja',newE==='baja');
+  }}
+
+  // Actualizar aggregate del mod-row
+  const vlista=e.target.closest('.vlista');
+  if(vlista){{
+    const modRow=vlista.previousElementSibling;
+    if(modRow){{
+      const ris=[...vlista.querySelectorAll('.vrow')].map(r=>r.dataset.ri);
+      let nOk=0,nRev=0,nBaja=0;
+      ris.forEach(r=>{{
+        const ev=getEst(r).e;
+        if(ev==='ok')nOk++;
+        else if(ev==='rev')nRev++;
+        else if(ev==='baja')nBaja++;
+      }});
+      const agg=modRow.querySelector('.mod-agg');
+      if(agg)agg.innerHTML=[
+        nOk?`<span class="agg-ok">✅${{nOk}}</span>`:'',
+        nRev?`<span class="agg-rev">⚠️${{nRev}}</span>`:'',
+        nBaja?`<span class="agg-baja">❌${{nBaja}}</span>`:''
+      ].join('');
     }}
   }}
-}}
 
-function borrar(e){{
-  e.stopPropagation();
-  const row=e.target.closest('.est-row');
-  const modRow=row?.previousElementSibling;
-  const k=modRow?.dataset?.kmod;
-  if(!k)return;
-  const nombre=k.split('|')[2]||k;
-  if(!confirm('¿Borrar definitivamente "'+nombre+'"?\\n\\nEsta acción no se puede deshacer. El modelo y todos sus vehículos desaparecerán del sistema.'))return;
-  DELETED.add(k);
-  localStorage.setItem(SK_DEL,JSON.stringify([...DELETED]));
-  delete EST[k];
-  localStorage.setItem(SK,JSON.stringify(EST));
   updSum();
-  render();
+
+  // Si se marcó como baja y no es admin, esconder al hacer re-render
+  if(newE==='baja'&&!isAdmin)render();
 }}
 
 function updSum(){{
-  const todos=VEH.filter(v=>!DELETED.has(kmod(v)));
-  const kmods=new Set(todos.map(v=>kmod(v)));
   let ok=0,rev=0,baja=0;
-  kmods.forEach(k=>{{
-    const e=getEst(k).e;
+  VEH.forEach(v=>{{
+    const e=getEst(v.ri).e;
     if(e==='ok')ok++;
     else if(e==='rev')rev++;
     else if(e==='baja')baja++;
@@ -544,9 +534,7 @@ function exportar(){{
   let csv='RI,Serie,Tipo,Modelo,Marca,Año,Patente,Dependencia,Estado,Dias_de_baja\\n';
   const sorted=[...VEH].sort((a,b)=>a.serie.localeCompare(b.serie)||a.ri.localeCompare(b.ri));
   sorted.forEach(v=>{{
-    const k=kmod(v);
-    if(DELETED.has(k))return;
-    const est=getEst(k);
+    const est=getEst(v.ri);
     const estado=est.e==='ok'?'Activo':est.e==='rev'?'Revisar':est.e==='baja'?'De baja':'Sin clasificar';
     const dias=est.e==='baja'&&est.fb?Math.floor((Date.now()-est.fb)/(24*60*60*1000)):'';
     csv+=esc(v.ri)+','+esc(v.serie)+','+esc(v.tipo)+','+esc(v.modelo_norm)+','+esc(v.marca)+','+esc(v.anio)+','+esc(v.patente)+','+esc(v.dep)+','+esc(estado)+','+esc(dias)+'\\n';
@@ -557,9 +545,14 @@ function exportar(){{
   a.click();
 }}
 
-updAdminUI();
-render();
-updSum();
+// ── Init ─────────────────────────────────────────────────────
+async function init(){{
+  updAdminUI();
+  await cargarEstados();
+  render();
+  updSum();
+}}
+init();
 </script>
 </body>
 </html>'''
