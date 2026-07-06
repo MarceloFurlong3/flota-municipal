@@ -174,6 +174,7 @@ body{{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);ove
   <div class="sblk"><div class="sn baja" id="s-baja">0</div><div class="slbl">❌ De baja</div></div>
   <div class="dvd"></div>
   <button class="xbtn" onclick="exportar()">\U0001f4cb CSV</button>
+  <button class="xbtn" id="btn-compartir" style="display:none;background:#16a34a" onclick="compartirEstados()">\U0001f4e4 Estados</button>
 </div>
 
 <script>
@@ -230,6 +231,28 @@ function updAdminUI(){{
     btn.style.background='rgba(255,255,255,.1)';
     btn.style.borderColor='rgba(255,255,255,.2)';
   }}
+  const cb=document.getElementById('btn-compartir');
+  if(cb)cb.style.display=isAdmin?'':'none';
+}}
+
+function compartirEstados(){{
+  const payload=JSON.stringify({{est:EST,del:[...DELETED]}});
+  const ta=document.createElement('textarea');
+  ta.value=payload;
+  ta.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90vw;height:40vh;z-index:9999;padding:12px;font-size:12px;border-radius:10px;border:2px solid #16a34a;background:#0f172a;color:#fff;font-family:monospace';
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998';
+  const cerrar=document.createElement('button');
+  cerrar.textContent='✕ Cerrar';
+  cerrar.style.cssText='position:fixed;top:calc(50% - 21vh - 40px);left:50%;transform:translateX(-50%);z-index:9999;padding:8px 20px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px';
+  const copiar=document.createElement('button');
+  copiar.textContent='\U0001f4cb Copiar todo';
+  copiar.style.cssText='position:fixed;top:calc(50% + 21vh + 8px);left:50%;transform:translateX(-50%);z-index:9999;padding:10px 24px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px';
+  copiar.onclick=()=>{{navigator.clipboard.writeText(payload).then(()=>{{copiar.textContent='✅ Copiado!';}});}};
+  cerrar.onclick=()=>{{overlay.remove();ta.remove();cerrar.remove();copiar.remove();}};
+  overlay.onclick=cerrar.onclick;
+  document.body.append(overlay,ta,cerrar,copiar);
+  ta.focus();ta.select();
 }}
 
 // ── Estado helpers ───────────────────────────────────────────
