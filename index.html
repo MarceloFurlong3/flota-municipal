@@ -129,6 +129,14 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);over
 .dvd{width:1px;height:36px;background:var(--border)}
 .xbtn{background:var(--dark);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;-webkit-appearance:none}
 
+/* FOTO BTN */
+.fbtn{background:none;border:none;font-size:15px;cursor:pointer;padding:3px 5px;border-radius:6px;color:#9ca3af;display:flex;align-items:center;gap:3px;flex-shrink:0;line-height:1}
+.fbtn.has-foto{color:#2563eb}
+.fcnt{font-size:10px;font-weight:700;background:#2563eb;color:#fff;border-radius:10px;padding:0 4px;line-height:16px}
+.foto-item{position:relative;width:calc(50% - 5px)}
+.foto-item img{width:100%;height:130px;object-fit:cover;border-radius:8px;cursor:zoom-in;display:block}
+.foto-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.55);border:none;border-radius:6px;color:#fff;font-size:14px;cursor:pointer;padding:2px 6px}
+
 @media(max-width:380px){
   .grid{grid-template-columns:repeat(2,1fr)}
   .hdr-titulo{font-size:18px}
@@ -174,7 +182,8 @@ const PIN="admin";
 const SUPA_URL='https://sugkmcdngvtvwzglodkh.supabase.co';
 const SUPA_KEY='sb_publishable_ZtJOsrwumSdUOPonai0m0A_LhojWgXm';
 
-let EST={};  // { ri: {e:'ok'|'rev'|'baja'|'', fb:timestamp|null} }
+let EST={};   // { ri: {e:'ok'|'rev'|'baja'|'', fb:timestamp|null} }
+let FOTOS={};  // { ri: [{id, url}] }
 let isAdmin=sessionStorage.getItem('fleet_admin')==='1';
 let serie='TODAS', q='';
 
@@ -402,6 +411,7 @@ function renderMM(lista){
     <button class="vebtn e-baja${est.e==='baja'?' on':''}" onclick="setVehE(event,'${riEsc}','baja')" title="De baja">❌</button>
   </div>
   <span class="vanio">${v.anio||'—'}</span>
+  <button class="fbtn${(FOTOS[v.ri]||[]).length?' has-foto':''}" onclick="abrirFotos(event,'${riEsc}')" title="Ver fotos">📷${(FOTOS[v.ri]||[]).length?` <span class="fcnt">${FOTOS[v.ri].length}</span>`:''}</button>
 </div>`;
       }).join('');
 
@@ -528,14 +538,148 @@ function exportar(){
   a.click();
 }
 
+// ── Fotos ─────────────────────────────────────────────────────
+async function cargarFotos(){
+  try{
+    const res=await fetch(SUPA_URL+'/rest/v1/flota_fotos?select=id,ri,url&order=created_at.asc&limit=50000',{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    const rows=await res.json();
+    FOTOS={};
+    if(Array.isArray(rows))rows.forEach(r=>{
+      if(!FOTOS[r.ri])FOTOS[r.ri]=[];
+      FOTOS[r.ri].push({id:r.id,url:r.url});
+    });
+  }catch(err){FOTOS={};}
+}
+
+async function subirFoto(ri,file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  const path=`${ri}/${Date.now()}.${ext}`;
+  const up=await fetch(`${SUPA_URL}/storage/v1/object/flota-fotos/${path}`,{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':file.type},
+    body:file
+  });
+  if(!up.ok)throw new Error('Upload falló: '+up.status);
+  const url=`${SUPA_URL}/storage/v1/object/public/flota-fotos/${path}`;
+  // Guardar registro en flota_fotos
+  await fetch(SUPA_URL+'/rest/v1/flota_fotos',{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify({ri,url})
+  });
+  if(!FOTOS[ri])FOTOS[ri]=[];
+  FOTOS[ri].push({id:null,url});
+}
+
+async function eliminarFoto(ri,id,url){
+  // Borrar de Storage
+  const path=url.split('/flota-fotos/')[1];
+  await fetch(`${SUPA_URL}/storage/v1/object/flota-fotos/${path}`,{
+    method:'DELETE',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  // Borrar de tabla
+  await fetch(`${SUPA_URL}/rest/v1/flota_fotos?id=eq.${id}`,{
+    method:'DELETE',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  if(FOTOS[ri])FOTOS[ri]=FOTOS[ri].filter(f=>f.id!==id);
+}
+
+function abrirFotos(e,ri){
+  e.stopPropagation();
+  const fotos=FOTOS[ri]||[];
+  const m=document.getElementById('foto-modal');
+  const titulo=document.getElementById('foto-modal-titulo');
+  const galeria=document.getElementById('foto-galeria');
+  titulo.textContent='📷 RI '+ri;
+  galeria.innerHTML=fotos.length
+    ?fotos.map(f=>`
+      <div class="foto-item" data-id="${f.id}">
+        <img src="${f.url}" onclick="window.open('${f.url}','_blank')" />
+        ${isAdmin?`<button class="foto-del" onclick="confirmarEliminar('${ri}',${f.id},'${f.url}',this.closest('.foto-item'))">🗑</button>`:''}
+      </div>`).join('')
+    :'<p style="color:#999;text-align:center;padding:20px">Sin fotos aún</p>';
+  document.getElementById('foto-ri').value=ri;
+  document.getElementById('foto-upload-sec').style.display=isAdmin?'block':'none';
+  m.style.display='flex';
+}
+
+function cerrarFotoModal(){
+  document.getElementById('foto-modal').style.display='none';
+  document.getElementById('foto-input').value='';
+}
+
+async function confirmarEliminar(ri,id,url,item){
+  if(!confirm('¿Eliminar esta foto?'))return;
+  item.style.opacity='.4';
+  try{
+    await eliminarFoto(ri,id,url);
+    item.remove();
+    actualizarFotoBtn(ri);
+  }catch(err){
+    item.style.opacity='1';
+    alert('Error al eliminar: '+err.message);
+  }
+}
+
+async function onFotoSubir(){
+  const input=document.getElementById('foto-input');
+  const ri=document.getElementById('foto-ri').value;
+  if(!input.files.length)return;
+  const btn=document.getElementById('foto-subir-btn');
+  btn.disabled=true;btn.textContent='Subiendo...';
+  try{
+    for(const file of input.files){
+      await subirFoto(ri,file);
+    }
+    // Refrescar galería
+    abrirFotos({stopPropagation:()=>{}},ri);
+    actualizarFotoBtn(ri);
+    input.value='';
+  }catch(err){
+    alert('Error: '+err.message);
+  }
+  btn.disabled=false;btn.textContent='Subir';
+}
+
+function actualizarFotoBtn(ri){
+  const n=(FOTOS[ri]||[]).length;
+  document.querySelectorAll(`.vrow[data-ri="${ri}"] .fbtn`).forEach(btn=>{
+    btn.className='fbtn'+(n?' has-foto':'');
+    btn.innerHTML='📷'+(n?` <span class="fcnt">${n}</span>`:'');
+  });
+}
+
 // ── Init ─────────────────────────────────────────────────────
 async function init(){
   updAdminUI();
   await cargarEstados();
+  await cargarFotos();
   render();
   updSum();
 }
 init();
 </script>
+
+<!-- Modal fotos -->
+<div id="foto-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e5e7eb">
+      <span id="foto-modal-titulo" style="font-weight:800;font-size:16px"></span>
+      <button onclick="cerrarFotoModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280">✕</button>
+    </div>
+    <div id="foto-galeria" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start"></div>
+    <div id="foto-upload-sec" style="padding:12px;border-top:1px solid #e5e7eb;display:none">
+      <input type="hidden" id="foto-ri">
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="foto-input" type="file" accept="image/*" multiple style="flex:1;font-size:13px">
+        <button id="foto-subir-btn" onclick="onFotoSubir()" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;white-space:nowrap">Subir</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
