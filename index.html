@@ -87,6 +87,13 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);over
 /* VEHÍCULOS LISTA */
 .vlista{display:none;background:#fff;border:1px solid var(--border);border-top:1px solid #f0f4f9;border-bottom-left-radius:10px;border-bottom-right-radius:10px;margin-bottom:5px;margin-top:-5px;overflow:hidden}
 .mod-row.open + .vlista{display:block}
+.kit-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:4px}
+.kit-tag.ok{background:#dcfce7;color:#15803d}
+.kit-tag.nd{background:#f1f5f9;color:#94a3b8}
+.kit-detalle{padding:10px 14px;background:#f8fafc;border-bottom:1px solid #f0f4f9;display:flex;flex-wrap:wrap;gap:8px}
+.kit-campo{display:flex;align-items:center;gap:5px;background:#fff;border:1px solid #e4eaf5;border-radius:8px;padding:4px 10px}
+.kit-lbl{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
+.kit-val{font-size:12px;font-weight:700;color:#0f172a}
 .vrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f8fafc}
 .vrow:last-child{border-bottom:none}
 .vrow.v-baja{opacity:.5;border-left:3px solid #dc2626}
@@ -184,6 +191,7 @@ const SUPA_KEY='sb_publishable_ZtJOsrwumSdUOPonai0m0A_LhojWgXm';
 
 let EST={};   // { ri: {e:'ok'|'rev'|'baja'|'', fb:timestamp|null} }
 let FOTOS={};  // { ri: [{id, url}] }
+let KITS={};   // { modelo_upper: {filtro_aceite, filtro_aire, filtro_combustible, filtro_habitaculo, filtro_hidraulico, verificado} }
 let isAdmin=sessionStorage.getItem('fleet_admin')==='1';
 let serie='TODAS', q='';
 
@@ -415,11 +423,29 @@ function renderMM(lista){
 </div>`;
       }).join('');
 
+      const kit=KITS[gmod.mod.toUpperCase()];
+      const kitBadge=kit
+        ? (kit.verificado
+            ? '<span class="kit-tag ok">🔩 Kit identificado</span>'
+            : '<span class="kit-tag nd">🔩 Sin kit</span>')
+        : '<span class="kit-tag nd">🔩 Sin kit</span>';
+
+      const kitDetalle=kit&&(kit.filtro_aceite||kit.filtro_aire||kit.filtro_combustible||kit.filtro_hidraulico||kit.filtro_habitaculo)
+        ? `<div class="kit-detalle">
+            ${kit.filtro_aceite      ?`<div class="kit-campo"><span class="kit-lbl">Aceite</span><span class="kit-val">${kit.filtro_aceite}</span></div>`:''}
+            ${kit.filtro_aire        ?`<div class="kit-campo"><span class="kit-lbl">Aire</span><span class="kit-val">${kit.filtro_aire}</span></div>`:''}
+            ${kit.filtro_combustible ?`<div class="kit-campo"><span class="kit-lbl">Combustible</span><span class="kit-val">${kit.filtro_combustible}</span></div>`:''}
+            ${kit.filtro_habitaculo  ?`<div class="kit-campo"><span class="kit-lbl">Habitáculo</span><span class="kit-val">${kit.filtro_habitaculo}</span></div>`:''}
+            ${kit.filtro_hidraulico  ?`<div class="kit-campo"><span class="kit-lbl">Hidráulico</span><span class="kit-val">${kit.filtro_hidraulico}</span></div>`:''}
+           </div>`
+        : '';
+
       return `<div class="mod-row" onclick="togMod(this)">
   <div class="mod-color" style="background:${c.color}"></div>
   <div class="mod-info">
     <div class="mod-nombre">${gmod.mod}</div>
     <div class="mod-tipo">${subtitulo}</div>
+    ${kitBadge}
   </div>
   <div class="mod-right">
     <div class="mod-agg">${aggHtml}</div>
@@ -427,7 +453,7 @@ function renderMM(lista){
     <span class="mod-arrow">›</span>
   </div>
 </div>
-<div class="vlista" style="display:none">${vrows}</div>`;
+<div class="vlista" style="display:none">${kitDetalle}${vrows}</div>`;
     }).join('');
 
     const initials=gm.marca.split(' ').map(w=>w[0]||'').join('').substring(0,3);
@@ -654,10 +680,19 @@ function actualizarFotoBtn(ri){
 }
 
 // ── Init ─────────────────────────────────────────────────────
+async function cargarKits(){
+  try{
+    const res=await fetch(SUPA_URL+'/rest/v1/kits_filtros?select=modelo,filtro_aceite,filtro_aire,filtro_combustible,filtro_habitaculo,filtro_hidraulico,verificado&limit=500',{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    const rows=await res.json();
+    rows.forEach(k=>{ KITS[k.modelo.toUpperCase()]=k; });
+  }catch(e){}
+}
+
 async function init(){
   updAdminUI();
-  await cargarEstados();
-  await cargarFotos();
+  await Promise.all([cargarEstados(), cargarFotos(), cargarKits()]);
   render();
   updSum();
 }
