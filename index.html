@@ -164,6 +164,21 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);over
 .kit-btn-sec{flex:1;padding:10px;border-radius:10px;font-family:'Barlow',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid #e4eaf5;background:#f8fafc;color:#374151}
 .kit-btn-pri{flex:2;padding:10px;border-radius:10px;font-family:'Barlow',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;background:#059669;color:#fff}
 .kit-btn-pri:disabled{opacity:.5;cursor:not-allowed}
+/* ALTERNATIVOS */
+.kit-alt-seccion{margin-top:14px;padding-top:12px;border-top:1.5px dashed #e4eaf5}
+.kit-alt-titulo{font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.kit-alt-chip{display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;padding:3px 10px;font-size:11px;margin:2px}
+.kit-alt-chip .kit-lbl{color:#3b82f6}
+.kit-alt-chip .kit-val{font-weight:700;color:#1e40af}
+.kit-alt-marca{font-size:9px;background:#dbeafe;border-radius:10px;padding:1px 5px;color:#1d4ed8;font-weight:700}
+.kit-alt-item{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #f1f5f9}
+.kit-alt-item:last-child{border-bottom:none}
+.kit-alt-del{background:none;border:none;font-size:14px;cursor:pointer;color:#dc2626;padding:0 2px;line-height:1;flex-shrink:0}
+.kit-alt-form{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.kit-alt-form .kit-select{width:110px;font-size:11px}
+.kit-alt-form .kit-input{min-width:0;flex:1;font-size:12px}
+.kit-alt-form .kit-input-marca{width:90px;font-size:12px}
+.kit-alt-add{background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe;border-radius:8px;padding:7px 10px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
 
 @media(max-width:380px){
   .grid{grid-template-columns:repeat(2,1fr)}
@@ -213,6 +228,7 @@ const SUPA_KEY='sb_publishable_ZtJOsrwumSdUOPonai0m0A_LhojWgXm';
 let EST={};   // { ri: {e:'ok'|'rev'|'baja'|'', fb:timestamp|null} }
 let FOTOS={};  // { ri: [{id, url}] }
 let KITS={};   // { modelo_upper: {filtro_aceite, filtro_aire, filtro_combustible, filtro_habitaculo, filtro_hidraulico, verificado} }
+let ALTS={};   // { modelo_upper: [{id, tipo, codigo, marca}] }
 let isAdmin=sessionStorage.getItem('fleet_admin')==='1';
 let serie='TODAS', q='';
 
@@ -451,14 +467,22 @@ function renderMM(lista){
             : '<span class="kit-tag nd">🔩 Sin kit</span>')
         : '<span class="kit-tag nd">🔩 Sin kit</span>';
 
-      const kitDetalle=kit&&(kit.filtro_aceite||kit.filtro_aire||kit.filtro_combustible||kit.filtro_hidraulico||kit.filtro_habitaculo)
+      const alts=ALTS[gmod.mod.toUpperCase()]||[];
+      const hayKit=kit&&(kit.filtro_aceite||kit.filtro_aire||kit.filtro_combustible||kit.filtro_hidraulico||kit.filtro_habitaculo);
+      const altsHtml=alts.length
+        ?`<div style="display:flex;flex-wrap:wrap;gap:3px;padding:6px 14px 10px;border-top:1px dashed #e4eaf5">
+            <span style="font-size:9px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.7px;align-self:center;margin-right:4px">Alt:</span>
+            ${alts.map(a=>`<div class="kit-alt-chip"><span class="kit-lbl">${a.tipo}</span><span class="kit-val">${a.codigo}</span>${a.marca?`<span class="kit-alt-marca">${a.marca}</span>`:''}</div>`).join('')}
+          </div>`
+        :'';
+      const kitDetalle=(hayKit||alts.length)
         ? `<div class="kit-detalle">
-            ${kit.filtro_aceite      ?`<div class="kit-campo"><span class="kit-lbl">Aceite</span><span class="kit-val">${kit.filtro_aceite}</span></div>`:''}
-            ${kit.filtro_aire        ?`<div class="kit-campo"><span class="kit-lbl">Aire</span><span class="kit-val">${kit.filtro_aire}</span></div>`:''}
-            ${kit.filtro_combustible ?`<div class="kit-campo"><span class="kit-lbl">Combustible</span><span class="kit-val">${kit.filtro_combustible}</span></div>`:''}
-            ${kit.filtro_habitaculo  ?`<div class="kit-campo"><span class="kit-lbl">Habitáculo</span><span class="kit-val">${kit.filtro_habitaculo}</span></div>`:''}
-            ${kit.filtro_hidraulico  ?`<div class="kit-campo"><span class="kit-lbl">Hidráulico</span><span class="kit-val">${kit.filtro_hidraulico}</span></div>`:''}
-           </div>`
+            ${kit&&kit.filtro_aceite      ?`<div class="kit-campo"><span class="kit-lbl">Aceite</span><span class="kit-val">${kit.filtro_aceite}</span></div>`:''}
+            ${kit&&kit.filtro_aire        ?`<div class="kit-campo"><span class="kit-lbl">Aire</span><span class="kit-val">${kit.filtro_aire}</span></div>`:''}
+            ${kit&&kit.filtro_combustible ?`<div class="kit-campo"><span class="kit-lbl">Combustible</span><span class="kit-val">${kit.filtro_combustible}</span></div>`:''}
+            ${kit&&kit.filtro_habitaculo  ?`<div class="kit-campo"><span class="kit-lbl">Habitáculo</span><span class="kit-val">${kit.filtro_habitaculo}</span></div>`:''}
+            ${kit&&kit.filtro_hidraulico  ?`<div class="kit-campo"><span class="kit-lbl">Hidráulico</span><span class="kit-val">${kit.filtro_hidraulico}</span></div>`:''}
+           </div>${altsHtml}`
         : '';
 
       return `<div class="mod-row" onclick="togMod(this)">
@@ -712,9 +736,23 @@ async function cargarKits(){
   }catch(e){}
 }
 
+async function cargarAlternativos(){
+  try{
+    const res=await fetch(SUPA_URL+'/rest/v1/kits_alternativos?select=id,modelo,tipo,codigo,marca&limit=5000',{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    const rows=await res.json();
+    rows.forEach(r=>{
+      const k=r.modelo.toUpperCase();
+      if(!ALTS[k])ALTS[k]=[];
+      ALTS[k].push(r);
+    });
+  }catch(e){}
+}
+
 async function init(){
   updAdminUI();
-  await Promise.all([cargarEstados(), cargarFotos(), cargarKits()]);
+  await Promise.all([cargarEstados(), cargarFotos(), cargarKits(), cargarAlternativos()]);
   render();
   updSum();
 }
@@ -740,6 +778,7 @@ function abrirKitModal(e,modelo){
   document.getElementById('kit-paso2').style.display='none';
   document.getElementById('kit-paso1-footer').style.display='';
   document.getElementById('kit-paso2-footer').style.display='none';
+  renderAltsModal(modelo);
   document.getElementById('kit-modal').style.display='flex';
 }
 
@@ -794,6 +833,60 @@ async function guardarKit(){
 function cerrarKitModal(){
   document.getElementById('kit-modal').style.display='none';
 }
+
+// ── Alternativos ──────────────────────────────────────────────
+function renderAltsModal(modelo){
+  const alts=ALTS[modelo.toUpperCase()]||[];
+  const lista=document.getElementById('kit-alts-lista');
+  if(!lista)return;
+  lista.innerHTML=alts.length
+    ? alts.map(a=>`
+        <div class="kit-alt-item" data-id="${a.id}">
+          <span class="kit-alt-chip" style="margin:0"><span class="kit-lbl">${a.tipo}</span><span class="kit-val">${a.codigo}</span>${a.marca?`<span class="kit-alt-marca">${a.marca}</span>`:''}</span>
+          ${isAdmin?`<button class="kit-alt-del" onclick="eliminarAlternativo('${a.id}')" title="Eliminar">✕</button>`:''}
+        </div>`).join('')
+    : '<p style="font-size:12px;color:#94a3b8;margin:4px 0">Sin alternativos cargados todavía.</p>';
+}
+
+async function agregarAlternativo(){
+  const tipo=document.getElementById('alt-tipo').value;
+  const codigo=document.getElementById('alt-codigo').value.trim();
+  const marca=document.getElementById('alt-marca').value.trim();
+  if(!codigo){alert('Falta el código del filtro');return;}
+  const btn=document.getElementById('alt-add-btn');
+  btn.disabled=true;btn.textContent='...';
+  try{
+    const body={modelo:kitModeloActual,tipo,codigo,marca:marca||null};
+    const res=await fetch(SUPA_URL+'/rest/v1/kits_alternativos',{
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify(body)
+    });
+    if(!res.ok)throw new Error('Error '+res.status);
+    const [row]=await res.json();
+    const k=kitModeloActual.toUpperCase();
+    if(!ALTS[k])ALTS[k]=[];
+    ALTS[k].push(row);
+    renderAltsModal(kitModeloActual);
+    document.getElementById('alt-codigo').value='';
+    document.getElementById('alt-marca').value='';
+  }catch(err){alert('Error: '+err.message);}
+  btn.disabled=false;btn.textContent='+ Agregar';
+}
+
+async function eliminarAlternativo(id){
+  if(!confirm('¿Eliminar este alternativo?'))return;
+  try{
+    const res=await fetch(SUPA_URL+'/rest/v1/kits_alternativos?id=eq.'+id,{
+      method:'DELETE',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    if(!res.ok)throw new Error('Error '+res.status);
+    const k=kitModeloActual.toUpperCase();
+    ALTS[k]=(ALTS[k]||[]).filter(a=>a.id!==id);
+    renderAltsModal(kitModeloActual);
+  }catch(err){alert('Error: '+err.message);}
+}
 </script>
 
 <!-- Modal fotos -->
@@ -833,6 +926,20 @@ function cerrarKitModal(){
     <div id="kit-paso2" class="kit-modal-body" style="display:none">
       <p style="font-size:12px;color:#64748b;margin-bottom:12px">Elegí el tipo y escribí el código o descripción de cada filtro.</p>
       <div id="kit-filas"></div>
+
+      <!-- Alternativos -->
+      <div class="kit-alt-seccion">
+        <div class="kit-alt-titulo">Filtros alternativos</div>
+        <div id="kit-alts-lista"></div>
+        <div class="kit-alt-form">
+          <select id="alt-tipo" class="kit-select" style="width:110px;font-size:11px">
+            <option>Aceite</option><option>Aire</option><option>Combustible</option><option>Habitáculo</option><option>Hidráulico</option><option>Otro</option>
+          </select>
+          <input id="alt-codigo" class="kit-input" type="text" placeholder="Código">
+          <input id="alt-marca" class="kit-input kit-input-marca" type="text" placeholder="Marca (opcional)" style="width:90px;flex:none">
+          <button id="alt-add-btn" class="kit-alt-add" onclick="agregarAlternativo()">+ Agregar</button>
+        </div>
+      </div>
     </div>
 
     <!-- Footer -->
