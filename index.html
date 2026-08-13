@@ -767,19 +767,23 @@ function abrirKitModal(e,modelo){
   e.stopPropagation();
   kitModeloActual=modelo;
   const kit=KITS[modelo.toUpperCase()]||{};
-  // Armar lista de campos existentes [tipo, valor]
   const existente=KIT_TIPOS
     .filter(t=>KIT_COLS[t]&&kit[KIT_COLS[t]])
     .map(t=>[t,kit[KIT_COLS[t]]]);
   document.getElementById('kit-modal-titulo').textContent='🔧 '+modelo;
   document.getElementById('kit-n-filtros').value=existente.length||'';
   document.getElementById('kit-modal').dataset.existente=JSON.stringify(existente);
-  document.getElementById('kit-paso1').style.display='block';
-  document.getElementById('kit-paso2').style.display='none';
-  document.getElementById('kit-paso1-footer').style.display='';
-  document.getElementById('kit-paso2-footer').style.display='none';
   renderAltsModal(modelo);
   document.getElementById('kit-modal').style.display='flex';
+  if(existente.length>0){
+    // ya tiene kit → abrir directo en paso 2 para editar
+    kitPaso2();
+  } else {
+    document.getElementById('kit-paso1').style.display='block';
+    document.getElementById('kit-paso2').style.display='none';
+    document.getElementById('kit-paso1-footer').style.display='';
+    document.getElementById('kit-paso2-footer').style.display='none';
+  }
 }
 
 function kitPaso2(){
@@ -796,12 +800,24 @@ function kitPaso2(){
       <input class="kit-input" type="text" placeholder="Código o descripción" value="${valAct.replace(/"/g,'&quot;')}">
     </div>`;
   }
+  html+=`<button onclick="kitAgregarFila()" style="width:100%;margin-top:6px;padding:8px;border:1.5px dashed #d1d5db;border-radius:8px;background:none;color:#6b7280;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;cursor:pointer">+ Agregar filtro</button>`;
   document.getElementById('kit-filas').innerHTML=html;
   document.getElementById('kit-paso1').style.display='none';
   document.getElementById('kit-paso2').style.display='block';
   document.getElementById('kit-paso1-footer').style.display='none';
   document.getElementById('kit-paso2-footer').style.display='';
   document.querySelector('#kit-filas .kit-input')?.focus();
+}
+
+function kitAgregarFila(){
+  const container=document.getElementById('kit-filas');
+  const btn=container.querySelector('button');
+  const n=container.querySelectorAll('.kit-fila').length+1;
+  const div=document.createElement('div');
+  div.className='kit-fila';
+  div.innerHTML=`<div class="kit-fila-n">${n}</div><select class="kit-select">${KIT_TIPOS.map(t=>`<option>${t}</option>`).join('')}</select><input class="kit-input" type="text" placeholder="Código o descripción">`;
+  container.insertBefore(div,btn);
+  div.querySelector('.kit-input').focus();
 }
 
 async function guardarKit(){
